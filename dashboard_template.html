@@ -1,0 +1,269 @@
+<title>Winamax AI Pro</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout : console de labo — bandeau d'état, onglets défilants, cartes « fiche d'analyse » empilées */
+:root{
+  --bg:#eef1ee; --panel:#ffffff; --ink:#18221d; --muted:#5d6b63; --line:#d5ddd7;
+  --felt:#1d6a4c; --felt-soft:#dcebe3; --good:#1f7a45; --warn:#a86a06; --warn-soft:#fbefd6;
+  --bad:#b23a2e; --bad-soft:#f7e0dc; --demo:#6a4bb3; --demo-soft:#ebe5f7;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1512; --panel:#17201b; --ink:#e4ece7; --muted:#93a39a; --line:#2a3630;
+  --felt:#4fbf8c; --felt-soft:#1c3328; --good:#5cc98a; --warn:#e3a443; --warn-soft:#3a2d14;
+  --bad:#f07a6c; --bad-soft:#3d1f1b; --demo:#b39bf0; --demo-soft:#2a2340; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1512; --panel:#17201b; --ink:#e4ece7; --muted:#93a39a; --line:#2a3630;
+  --felt:#4fbf8c; --felt-soft:#1c3328; --good:#5cc98a; --warn:#e3a443; --warn-soft:#3a2d14;
+  --bad:#f07a6c; --bad-soft:#3d1f1b; --demo:#b39bf0; --demo-soft:#2a2340; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--panel)}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 40px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+header.top .in{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px 0}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.brand h1{font-family:var(--f-display);font-weight:700;font-size:26px;letter-spacing:.02em;margin:0;text-transform:uppercase}
+.brand h1 span{color:var(--felt)}
+.stamp{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;margin-top:8px}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{flex:0 0 auto;font-family:var(--f-display);font-size:16px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;
+  background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:6px 10px 8px;cursor:pointer}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--felt)}
+nav.tabs button:focus-visible{outline:2px solid var(--felt);outline-offset:-2px}
+section.screen{display:grid;gap:14px;margin-top:14px}
+h2{font-family:var(--f-display);font-size:22px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;margin:4px 0 0;text-wrap:balance}
+h3{font-family:var(--f-display);font-size:18px;font-weight:600;letter-spacing:.02em;margin:0;text-wrap:balance}
+p{margin:0}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.banner{border-radius:10px;padding:10px 12px;display:grid;gap:4px;font-size:14px}
+.banner.demo{background:var(--demo-soft);color:var(--ink);border:1px solid var(--demo)}
+.banner.demo b{color:var(--demo)}
+.banner.warn{background:var(--warn-soft);border:1px solid var(--warn)}
+.banner.bad{background:var(--bad-soft);border:1px solid var(--bad)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:10px;min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:600px){.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:2px;min-width:0}
+.kpi .l{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.kpi .v{font-family:var(--f-mono);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:12px;color:var(--muted)}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+.pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:2px 8px;border:1px solid currentColor}
+.pill.ok{color:var(--good)} .pill.no{color:var(--muted)} .pill.warn{color:var(--warn)} .pill.bad{color:var(--bad)} .pill.demo{color:var(--demo)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+td.n,th.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tw{overflow-x:auto}
+.fiche td:first-child{color:var(--muted);width:42%}
+.probbar{display:flex;height:22px;border-radius:6px;overflow:hidden;font-family:var(--f-mono);font-size:11px}
+.probbar div{display:flex;align-items:center;justify-content:center;color:#fff;min-width:0;overflow:hidden;white-space:nowrap}
+.pb-h{background:var(--felt)} .pb-d{background:var(--muted)} .pb-a{background:var(--demo)}
+ul.args{margin:0;padding-left:18px;display:grid;gap:2px;font-size:14px}
+ul.args.pro li::marker{content:"+ ";color:var(--good)}
+ul.args.con li::marker{content:"– ";color:var(--bad)}
+svg text{fill:var(--muted);font-family:var(--f-mono);font-size:10px}
+.ex{display:grid;gap:8px}
+.ex .cards{font-family:var(--f-mono);font-size:18px;font-weight:600}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button.b{font-family:var(--f-body);font-weight:700;font-size:14px;border-radius:8px;border:1px solid var(--felt);background:var(--panel);color:var(--felt);padding:8px 14px;cursor:pointer}
+button.b.primary{background:var(--felt);color:var(--panel)}
+button.b:focus-visible,input:focus-visible{outline:2px solid var(--felt);outline-offset:2px}
+.answer{border-left:3px solid var(--felt);padding-left:10px;font-size:14px}
+label{font-size:13px;color:var(--muted);display:grid;gap:2px}
+input{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:14px}
+dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono)}
+@media (prefers-reduced-motion:no-preference){section.screen{animation:in .18s ease-out}@keyframes in{from{transform:translateY(4px)}to{transform:none}}}
+</style>
+
+<header class="top"><div class="in">
+  <div class="brand"><h1>Winamax AI <span>Pro</span></h1><span class="stamp" id="stamp"></span></div>
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+</div></header>
+<main class="wrap" id="app"></main>
+
+<script id="data" type="application/json">__DATA__</script>
+<script>
+const D = JSON.parse(document.getElementById('data').textContent);
+const $ = (h) => { const t = document.createElement('template'); t.innerHTML = h.trim(); return t.content; };
+const pct = (x, d=0) => (x==null||isNaN(x)) ? '—' : (x*100).toFixed(d) + ' %';
+const sgn = (x, d=1) => (x>=0?'+':'') + (x*100).toFixed(d) + ' %';
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const S = D.sports || [];
+const isDemo = S.some(s => s.source === 'DEMO');
+const P = D.poker;
+document.getElementById('stamp').textContent = 'Données du ' + D.generated;
+
+const demoBanner = () => isDemo ? `<div class="banner demo"><b>MODE DÉMONSTRATION</b>
+  <span>Les matchs « DEMO A… » sont inventés par le programme pour tester le robot. Ils ne correspondent à aucun vrai championnat. Argent fictif uniquement.</span></div>` : '';
+
+function curveSVG(curve, start){
+  if (!curve || curve.length < 2) return '<p class="muted">Pas assez de paris pour tracer la courbe.</p>';
+  const W=640,H=180,pl=44,pr=10,pt=10,pb=22;
+  const ys = curve.map(c=>c.bank); const lo=Math.min(...ys,start)*0.98, hi=Math.max(...ys,start)*1.02;
+  const x=i=>pl+(W-pl-pr)*i/(curve.length-1), y=v=>pt+(H-pt-pb)*(1-(v-lo)/(hi-lo));
+  const pts=curve.map((c,i)=>`${x(i).toFixed(1)},${y(c.bank).toFixed(1)}`).join(' ');
+  const ticks=[lo,(lo+hi)/2,hi].map(v=>`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${pl-6}" y="${y(v)+3}" text-anchor="end">${Math.round(v)}</text>`).join('');
+  const last=curve[curve.length-1];
+  return `<div class="tw"><svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Évolution de la bankroll fictive">
+    ${ticks}<line x1="${pl}" x2="${W-pr}" y1="${y(start)}" y2="${y(start)}" stroke="var(--muted)" stroke-dasharray="4 4" stroke-width="1"/>
+    <polygon points="${pl},${y(lo)} ${pts} ${x(curve.length-1)},${y(lo)}" fill="var(--felt-soft)"/>
+    <polyline points="${pts}" fill="none" stroke="var(--felt)" stroke-width="2"/>
+    <circle cx="${x(curve.length-1)}" cy="${y(last.bank)}" r="4" fill="${last.bank>=start?'var(--good)':'var(--bad)'}"/>
+    <text x="${pl}" y="${H-6}">${esc(curve[0].date)}</text><text x="${W-pr}" y="${H-6}" text-anchor="end">${esc(last.date)}</text>
+  </svg></div>`;
+}
+
+const screens = {
+  'Accueil': () => {
+    const s = S[0]; const bt = s?.backtest;
+    const sel = S.flatMap(x => x.cards.filter(c => c.selected));
+    return `${demoBanner()}
+    ${D.alerts.map(a=>`<div class="banner warn">${esc(a)}</div>`).join('')}
+    <div class="kpis">
+      <div class="kpi"><span class="l">Bankroll fictive</span><span class="v ${bt&&bt.bank_end>=D.settings.bankroll_start?'pos':'neg'}">${bt?Math.round(bt.bank_end):'—'} €</span><span class="s">départ ${D.settings.bankroll_start} € · backtest</span></div>
+      <div class="kpi"><span class="l">Rendement paris</span><span class="v ${bt&&bt.roi>=0?'pos':'neg'}">${bt?sgn(bt.roi):'—'}</span><span class="s">${bt?bt.n_bets:0} paris simulés</span></div>
+      <div class="kpi"><span class="l">Poker simulé</span><span class="v ${P.today.roi>=0?'pos':'neg'}">${sgn(P.today.roi,0)}</span><span class="s">${P.today.tournois} tournois aujourd'hui</span></div>
+      <div class="kpi"><span class="l">Sélections du jour</span><span class="v">${sel.length}</span><span class="s">${S.every(x=>x.validated)?'modèle validé':'à observer seulement'}</span></div>
+    </div>
+    ${S.map(x=>`<div class="card"><div class="row"><h3>${esc(x.name)}</h3><span class="pill ${x.validated?'ok':'bad'}">${x.validated?'avantage démontré':'avantage non démontré'}</span></div><p>${esc(x.backtest.verdict)}</p></div>`).join('')}
+    <div class="card"><h3>Ce que fait le robot chaque jour</h3>
+      <p class="small muted">Il analyse les matchs, compare ses probabilités aux cotes, note ses prédictions avant les rencontres, joue des tournois de poker simulés, puis publie ce tableau de bord. Il ne se connecte à aucun compte et ne place aucune mise : toute décision réelle reste la tienne.</p></div>`;
+  },
+  'Rencontres': () => demoBanner() + S.map(s => {
+    const byMatch = {};
+    s.cards.forEach(c => { (byMatch[c.match] ||= {c, m:{}}).m[c.market] = c; });
+    const list = Object.values(byMatch);
+    if (!list.length) return `<div class="card"><p>Aucune rencontre à venir avec cotes.</p></div>`;
+    return `<h2>${esc(s.name)}</h2>` + list.map(({c,m}) => {
+      const H=m.H,Dd=m.D,A=m.A;
+      const bar=(a,b,cc)=>`<div class="probbar"><div class="pb-h" style="width:${a*100}%">${pct(a)}</div><div class="pb-d" style="width:${b*100}%">${pct(b)}</div><div class="pb-a" style="width:${cc*100}%">${pct(cc)}</div></div>`;
+      return `<div class="card"><div class="row"><h3>${esc(c.match)}</h3><span class="small muted">${esc(c.date)}</span></div>
+        ${H&&Dd&&A?`<div class="small muted">Modèle (domicile · nul · extérieur)</div>${bar(H.p_model,Dd.p_model,A.p_model)}
+        <div class="small muted">Marché, marge retirée</div>${bar(H.p_fair,Dd.p_fair,A.p_fair)}`:''}
+        <p class="small muted">Cotes 1 / N / 2 : <span style="font-family:var(--f-mono)">${H?.odds??'—'} · ${Dd?.odds??'—'} · ${A?.odds??'—'}</span></p></div>`;
+    }).join('');
+  }).join(''),
+  'Pronostics': () => demoBanner() + S.map(s => {
+    const sel = s.cards.filter(c=>c.selected), rest = s.cards.filter(c=>!c.selected).slice(0,4);
+    const fiche = c => `<div class="card"><div class="row"><h3>${esc(c.match)}</h3>
+      <span class="pill ${c.selected?(c.validated?'ok':'warn'):'no'}">${c.selected?(c.validated?'sélection':'sélection non fiable'):'écartée'}</span></div>
+      <div class="tw"><table class="fiche"><tbody>
+        <tr><td>Compétition</td><td>${esc(c.league)} · ${esc(c.date)}</td></tr>
+        <tr><td>Marché étudié</td><td>${esc(c.market_name)}</td></tr>
+        <tr><td>Cote</td><td class="n">${c.odds.toFixed(2)}</td></tr>
+        <tr><td>Probabilité estimée</td><td class="n">${pct(c.p_model,1)}</td></tr>
+        <tr><td>Probabilité implicite</td><td class="n">${pct(c.p_implied,1)} <span class="muted">(${pct(c.p_fair,1)} sans marge)</span></td></tr>
+        <tr><td>Avantage théorique</td><td class="n ${c.ev>=0?'pos':'neg'}">${sgn(c.ev)} par € misé</td></tr>
+        <tr><td>Incertitude</td><td>${esc(c.unc_level)}${c.rejected_because.length?` · <span class="muted">${esc(c.rejected_because.join(' ; '))}</span>`:''}</td></tr>
+        <tr><td>Dernière mise à jour</td><td>${esc(c.updated)} · ${esc(c.source)}</td></tr>
+      </tbody></table></div>
+      <ul class="args pro">${c.pro.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+      <ul class="args con">${c.con.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;
+    return `<h2>${esc(s.name)}</h2>
+      ${s.validated?'':`<div class="banner bad">Le modèle n'a pas encore prouvé qu'il fait mieux que le marché. Ces fiches servent à observer et apprendre, pas à miser.</div>`}
+      ${sel.length?sel.map(fiche).join(''):`<div class="card"><p>Aucun pari ne présente d'avantage suffisamment fiable aujourd'hui.</p></div>`}
+      <h3 class="muted">Exemples écartés</h3>${rest.map(fiche).join('')}`;
+  }).join(''),
+  'Historique': () => S.map(s => { const b = s.backtest; return `<h2>${esc(s.name)}</h2>
+    <div class="card"><h3>Précision des modèles</h3><p class="small muted">Testés match par match, chacun prédit sans connaître le résultat. Plus le score est bas, mieux c'est.</p>
+      <div class="tw"><table><thead><tr><th>Modèle</th><th class="n">Brier</th><th class="n">Log loss</th><th class="n">Matchs</th></tr></thead><tbody>
+      ${b.models.map(m=>`<tr><td>${esc(m.model)}</td><td class="n">${m.brier.toFixed(4)}</td><td class="n">${m.logloss.toFixed(4)}</td><td class="n">${m.n}</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="card"><div class="row"><h3>Bankroll fictive</h3>${b.stopped?'<span class="pill bad">stop-loss déclenché</span>':''}</div>
+      ${curveSVG(b.curve, D.settings.bankroll_start)}
+      <dl><dt>Paris simulés</dt><dd>${b.n_bets}</dd><dt>Réussite</dt><dd>${pct(b.hit_rate,1)}</dd>
+      <dt>Rendement</dt><dd class="${b.roi>=0?'pos':'neg'}">${sgn(b.roi)}</dd>
+      <dt>Fourchette 95 %</dt><dd>${sgn(b.roi_ci95[0])} à ${sgn(b.roi_ci95[1])}</dd>
+      <dt>Pire baisse</dt><dd>${pct(b.max_drawdown,1)}</dd></dl>
+      <p class="small muted">Si la fourchette contient 0, le résultat peut être dû au hasard.</p></div>
+    <div class="card"><h3>Par marché et par cote</h3><div class="tw"><table><thead><tr><th>Groupe</th><th class="n">Paris</th><th class="n">Réussite</th><th class="n">Rendement</th></tr></thead><tbody>
+      ${b.breakdown.map(r=>`<tr><td>${esc(r['groupe'])}</td><td class="n">${r['paris']}</td><td class="n">${pct(r['réussite'])}</td><td class="n ${r.roi>=0?'pos':'neg'}">${sgn(r.roi)}</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="card"><h3>Mois où le modèle se trompe le plus</h3><p class="small muted">Écart de score Brier par rapport au marché (positif = moins bon que le marché).</p>
+      <div class="tw"><table><tbody>${b.worst_months.map(r=>`<tr><td>${esc(r['mois'])}</td><td class="n">${(+r['écart_brier']).toFixed(4)}</td><td class="n">${r['matchs']} matchs</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="card"><h3>Derniers paris fictifs</h3><div class="tw"><table><thead><tr><th>Date</th><th>Match</th><th class="n">Cote</th><th class="n">Mise</th><th class="n">Résultat</th></tr></thead><tbody>
+      ${b.bets.slice(-10).reverse().map(x=>`<tr><td class="n">${esc(x.date)}</td><td>${esc(x.match)} · ${esc(x.market)}</td><td class="n">${x.odds.toFixed(2)}</td><td class="n">${x.stake.toFixed(2)}</td><td class="n ${x.won?'pos':'neg'}">${x.pnl>=0?'+':''}${x.pnl.toFixed(2)}</td></tr>`).join('')}</tbody></table></div></div>
+    <p class="small muted">${D.n_logged} prédiction(s) horodatée(s) avant match dans le journal.</p>`; }).join(''),
+  'Poker': () => {
+    const pl = P.places, tot = Object.values(pl).reduce((a,b)=>a+b,0)||1;
+    const imp = P.improvement;
+    return `<div class="banner demo"><b>SIMULATEUR INDÉPENDANT</b><span>Le robot joue seul contre des adversaires virtuels, avec des jetons fictifs. Il n'est relié à aucun logiciel de poker réel.</span></div>
+    <div class="kpis">
+      <div class="kpi"><span class="l">Tournois</span><span class="v">${P.today.tournois}</span><span class="s">Sit & Go 6 joueurs</span></div>
+      <div class="kpi"><span class="l">Mains jouées</span><span class="v">${P.hands}</span><span class="s">aujourd'hui</span></div>
+      <div class="kpi"><span class="l">ROI simulé</span><span class="v ${P.today.roi>=0?'pos':'neg'}">${sgn(P.today.roi,0)}</span><span class="s">droit d'entrée fictif 10</span></div>
+      <div class="kpi"><span class="l">Dans les places payées</span><span class="v">${pct(P.today.itm)}</span><span class="s">1er ou 2e</span></div>
+    </div>
+    <div class="card"><h3>Places finales</h3><div class="tw"><table><tbody>${Object.entries(pl).map(([k,v])=>`<tr><td>${k}${k==='1'?'re':'e'} place</td><td style="width:60%"><div style="height:12px;border-radius:4px;background:var(--felt);width:${v/tot*100}%"></div></td><td class="n">${v}</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="card"><h3>Rendement selon le style des adversaires</h3><p class="small muted">Rendement moyen des tournois où ce style était présent.</p>
+      <div class="tw"><table><tbody>${Object.entries(P.by_style).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${esc(k)}</td><td class="n ${v>=0?'pos':'neg'}">${sgn(v,0)}</td></tr>`).join('')}</tbody></table></div></div>
+    ${imp?`<div class="card"><h3>Auto-amélioration du jour</h3>
+      <p class="small">Sur ${imp.n_test} tournois jamais vus : ${sgn(imp.test_avant,0)} avant, ${sgn(imp.test_apres,0)} après. ${imp.test_apres>imp.test_avant?'Nouveaux réglages adoptés.':'Changement refusé : pas d\'amélioration confirmée.'}</p>
+      <div class="tw"><table><tbody>${imp.history.slice(1).map(h=>`<tr><td>${esc(h.essai)}</td><td class="n">${sgn(h.roi_train,0)}</td><td>${h.garde?'<span class="pill ok">gardé</span>':'<span class="pill no">rejeté</span>'}</td></tr>`).join('')}</tbody></table></div></div>`:''}
+    <h2>Exercices du jour</h2>
+    ${P.exercises.map((e,i)=>`<div class="card ex"><div class="row"><span class="cards">${esc(e.main)}</span><span class="small muted">Tableau ${esc(e.tableau)}</span></div>
+      <p>${esc(e.question)}</p><div class="btns"><button class="b" id="exs-${i}" data-ex="${i}" data-a="SUIVRE">Suivre</button><button class="b" id="exf-${i}" data-ex="${i}" data-a="SE COUCHER">Se coucher</button></div>
+      <div class="answer" id="ans-${i}" hidden></div></div>`).join('')}`;
+  },
+  'Mes parties': () => `<div class="card"><h3>Analyse de tes parties terminées</h3>
+    <p>Ce module arrive à la phase D. Il lira les historiques de mains que tu exportes toi-même depuis Winamax, après tes sessions, et repérera les situations où tes décisions coûtent le plus.</p>
+    <p class="small muted">Rien ne sera lu pendant une partie en cours : l'analyse se fait uniquement sur des parties terminées, pour respecter les règles contre l'assistance en temps réel.</p></div>
+    <div class="card"><h3>En attendant</h3><p>Les exercices de l'onglet Poker utilisent la même méthode : équité, cotes du pot et espérance de chaque décision.</p></div>`,
+  'Réglages': () => { const c = D.settings; return `<div class="card"><h3>Filtres des paris</h3><dl>
+      <dt>Espérance minimale</dt><dd>${sgn(c.min_ev,0)}</dd><dt>Cotes étudiées</dt><dd>${c.min_odds} à ${c.max_odds}</dd>
+      <dt>Matchs connus min.</dt><dd>${c.min_games}</dd><dt>Incertitude max.</dt><dd>${c.max_uncertainty}</dd></dl></div>
+    <div class="card"><h3>Gestion du risque (fictif)</h3><dl>
+      <dt>Bankroll de départ</dt><dd>${c.bankroll_start} €</dd><dt>Mise maximale</dt><dd>${pct(c.max_stake_pct)} de la bankroll</dd>
+      <dt>Méthode de mise</dt><dd>¼ Kelly plafonné</dd><dt>Arrêt automatique</dt><dd>après −${pct(c.stop_loss_pct)}</dd>
+      <dt>Martingale</dt><dd>jamais</dd></dl><p class="small muted">Ces réglages se modifient dans le fichier config.py.</p></div>
+    <div class="card"><h3>Mon budget réel du mois</h3>
+      <p class="small muted">Note ici ce que tu dépenses vraiment. Ces chiffres restent dans ce téléphone uniquement.</p>
+      <div class="form"><label for="bud">Budget maximum (€)<input id="bud" type="number" min="0" step="1" inputmode="decimal"></label>
+      <label for="dep">Dépense à ajouter (€)<input id="dep" type="number" min="0" step="0.5" inputmode="decimal"></label></div>
+      <div class="btns"><button class="b primary" id="add">Ajouter la dépense</button><button class="b" id="reset">Nouveau mois</button></div>
+      <p id="budmsg"></p></div>
+    <div class="card"><h3>Règles et confidentialité</h3><ul class="args"><li>Aucune connexion à ton compte Winamax.</li><li>Aucune mise automatique : le robot propose, tu décides.</li><li>Le robot de poker ne joue que dans le simulateur interne.</li><li>Jouer comporte des risques : endettement, dépendance. Joueurs Info Service : 09 74 75 13 13 (appel non surtaxé).</li></ul></div>`; },
+};
+
+const names = Object.keys(screens);
+const tabs = document.getElementById('tabs'), app = document.getElementById('app');
+let current = names.includes(location.hash.slice(1)) ? location.hash.slice(1) : names[0];
+try { const t = localStorage.getItem('wap-tab'); if (!location.hash && names.includes(t)) current = t; } catch(e) {}
+
+function render(){
+  tabs.innerHTML = names.map(n=>`<button role="tab" aria-selected="${n===current}" data-tab="${n}">${n}</button>`).join('');
+  app.replaceChildren($(`<section class="screen">${screens[current]()}</section>`));
+  if (current === 'Réglages') budget();
+}
+tabs.addEventListener('click', e => { const n = e.target.dataset.tab; if(!n) return; current = n; try{localStorage.setItem('wap-tab',n)}catch(err){} render(); window.scrollTo(0,0); });
+app.addEventListener('click', e => {
+  const i = e.target.dataset.ex; if (i === undefined) return;
+  const ex = P.exercises[i], ok = e.target.dataset.a === ex.reponse, box = document.getElementById('ans-'+i);
+  box.hidden = false;
+  box.innerHTML = `<b class="${ok?'pos':'neg'}">${ok?'Bonne réponse':'Pas tout à fait'} : ${esc(ex.reponse)}</b><br>${esc(ex.explication)}<br><span class="muted">Main actuelle : ${esc(ex.main_actuelle)}</span>`;
+});
+function budget(){
+  const read = () => { try { return JSON.parse(localStorage.getItem('wap-budget')||'{}'); } catch(e){ return {}; } };
+  const save = s => { try { localStorage.setItem('wap-budget', JSON.stringify(s)); } catch(e){} };
+  let s = Object.assign({max:0, spent:0}, read());
+  const bud = document.getElementById('bud'), dep = document.getElementById('dep'), msg = document.getElementById('budmsg');
+  const show = () => { bud.value = s.max || ''; const left = s.max - s.spent;
+    msg.innerHTML = !s.max ? `<span class="muted">Fixe un budget pour activer l'alerte.</span>` :
+      left < 0 ? `<span class="pill bad">dépassé</span> ${s.spent.toFixed(2)} € dépensés pour ${s.max} € prévus. Arrête-toi pour ce mois.` :
+      left < s.max*0.2 ? `<span class="pill warn">attention</span> Il reste ${left.toFixed(2)} €.` :
+      `<span class="pill ok">dans le budget</span> ${s.spent.toFixed(2)} € dépensés sur ${s.max} €.`; };
+  bud.addEventListener('change', () => { s.max = Math.max(0, +bud.value||0); save(s); show(); });
+  document.getElementById('add').addEventListener('click', () => { const v = +dep.value; if (v>0){ s.spent += v; dep.value=''; save(s); show(); } });
+  document.getElementById('reset').addEventListener('click', () => { s.spent = 0; save(s); show(); });
+  show();
+}
+render();
+</script>
