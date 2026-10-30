@@ -106,6 +106,13 @@
    "roi": 0.77,
    "itm": 0.5,
    "victoires": 0.4
+  },
+  {
+   "date": "2026-10-30",
+   "tournois": 40,
+   "roi": 0.695,
+   "itm": 0.55,
+   "victoires": 0.3
   }
  ]
 }
