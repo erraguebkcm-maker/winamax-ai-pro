@@ -3,7 +3,7 @@
   "open_range": 0.26,
   "push_fold_bb": 12.0,
   "push_range_short": 0.3,
-  "value_raise_eq": 0.56,
+  "value_raise_eq": 0.6,
   "call_margin": 0.03,
   "bluff_freq": 0.06,
   "iters": 250
@@ -204,6 +204,13 @@
    "roi": 0.965,
    "itm": 0.55,
    "victoires": 0.45
+  },
+  {
+   "date": "2026-11-13",
+   "tournois": 40,
+   "roi": 0.635,
+   "itm": 0.5,
+   "victoires": 0.325
   }
  ]
 }
